@@ -51,7 +51,7 @@ export class MemberDetailComponent {
   loadMember()
   {
     const username = this.route.snapshot.paramMap.get('username');
-    if(!username) return;
+    if(username == null) return;
     this.memberService.getMember(username).subscribe({
       next : respone => {
         this.member = respone
