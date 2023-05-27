@@ -1,5 +1,7 @@
+using System.Runtime.CompilerServices;
 using API.DTO;
 using API.Entities;
+using API.Helpers;
 using API.Interfaces;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
@@ -52,9 +54,26 @@ namespace API.Data
             .SingleOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<MemberDTO>> GetMembersAsync()
+        public async Task<PageList<MemberDTO>> GetMembersAsync(UserParams userParams)
         {
-            return await _context.Users.ProjectTo<MemberDTO>(_mapper.ConfigurationProvider).ToListAsync();
+            // var query = _context.Users.ProjectTo<MemberDTO>(_mapper.ConfigurationProvider).AsNoTracking();
+            var query = _context.Users.AsQueryable();
+            query = query.Where(u => u.UserName != userParams.CurrentUserName);
+            query = query.Where(g => g.Gender == userParams.Gender);
+
+            var minDob = DateTime.Today.AddYears(-userParams.MaxAge - 1).Date;
+            var maxDob =  DateTime.Today.AddYears(-userParams.MinAge - 1).Date;
+            // var minDate = DateOnly.FromDateTime(DateTime.Today.AddYears(-userParams.MaxAge - 1));
+            // var maxDate = DateOnly.FromDateTime(DateTime.Today.AddYears(-userParams.MinAge));
+
+            query = query.Where(u => u.DateOfBirth >= minDob && u.DateOfBirth <= maxDob); 
+            query =userParams.OrderBy switch
+            {
+                "created" => query.OrderByDescending(u => u.Created),
+                _=> query.OrderByDescending(u => u.LastActive)     
+            };
+            return await PageList<MemberDTO>.CreateAsync(query.AsNoTracking().ProjectTo<MemberDTO>(_mapper.ConfigurationProvider),
+             userParams.PageNumber, userParams.PageSize);
         }
     }
 }
