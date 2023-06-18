@@ -11,22 +11,18 @@ import { MessageService } from 'src/app/_services/message.service';
 export class MemberMessagesComponent {
   @ViewChild('messageForm') messageFrom? : NgForm;
   @Input() username?: string;
-  @Input() messages: Message[] = [];
-  messageContent = '';
+  messageContent = ''; 
 
-  constructor(private messageService: MessageService){}
+  constructor(public messageService: MessageService){}
 
   ngOnInit(): void{
-    console.log(this.messages);
+    // console.log(this.messages);
   }
 
   sendMessage(){
     if(!this.username) return;
-    this.messageService.sendMessage(this.username, this.messageContent).subscribe({
-      next: message =>{
-        this.messages.push(message);
-        this.messageFrom?.reset();
-      }
+    this.messageService.sendMessage(this.username, this.messageContent).then(() => {
+      this.messageFrom?.reset();
     })
     
   }
